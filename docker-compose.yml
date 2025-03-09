@@ -1,0 +1,39 @@
+services:
+  langflow:
+    image: langflowai/langflow:latest
+    container_name: langflow_app
+    ports:
+      - "7860:7860"
+    environment:
+      - LANGFLOW_DATABASE_URL=postgresql://langflow_user:password@db:5432/langflow_db
+      - LANGFLOW_COMPONENTS_PATH=/app/custom_components
+      - LANGFLOW_CONFIG_DIR=/app/langflow
+    volumes:
+      - ./custom_components:/app/custom_components
+      - langflow-data:/app/langflow
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: langflow_db
+    environment:
+      POSTGRES_USER: langflow_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: langflow_db
+    volumes:
+      - langflow-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Initialize volume permissions
+  init-volumes:
+    image: busybox
+    command: sh -c "mkdir -p /app/langflow && chmod -R 777 /app/langflow"
+    volumes:
+      - langflow-data:/app/langflow
+    restart: "no"
+
+volumes:
+  langflow-data:
+  langflow-postgres: 

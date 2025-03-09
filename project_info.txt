@@ -1,0 +1,39 @@
+# Langflow Docker Setup
+
+## Project Overview
+This project provides a Docker Compose configuration for running Langflow locally on a MacBook Pro. Langflow is a UI for LangChain, enabling users to create and prototype LLM applications visually.
+
+## Project Structure
+- `docker-compose.yml`: Main configuration file for Docker services
+- `.env.example`: Example environment variables file
+- `README.md`: Instructions for using the Docker setup
+- `custom_components/`: Directory for custom Langflow components
+- `project_info.txt`: This file, containing project documentation
+
+## Requirements
+- Docker Desktop for Mac
+- At least 4GB of free RAM
+- At least 10GB of free disk space
+
+## Configuration
+The Docker Compose setup includes:
+1. Langflow service using the official `langflowai/langflow:latest` image
+2. PostgreSQL database for persistence
+3. Docker volumes for data storage with proper permissions
+4. Support for custom components
+5. Volume initialization service to ensure proper permissions
+
+## Usage
+1. Create required directories: `mkdir -p custom_components`
+2. Start services: `docker compose up -d`
+3. Access Langflow at: http://localhost:7860
+4. Stop services: `docker compose down`
+
+## Changelog
+- 2024-03-09: Initial setup with Docker Compose, PostgreSQL, and custom components support
+- 2024-03-09: Updated commands to use `docker compose` instead of `docker-compose` for compatibility with newer Docker versions
+- 2024-03-09: Added volume initialization service to fix permission issues with the Langflow data directory
+
+## References
+- Langflow Documentation: https://docs.langflow.org/deployment-docker
+- Langflow GitHub: https://github.com/langflow-ai/langflow 
