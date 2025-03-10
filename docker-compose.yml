@@ -3,14 +3,20 @@ services:
     image: langflowai/langflow:latest
     container_name: langflow_app
     ports:
-      - "7860:7860"
+      - "${LANGFLOW_PORT:-7860}:7860"
     environment:
-      - LANGFLOW_DATABASE_URL=postgresql://langflow_user:password@db:5432/langflow_db
-      - LANGFLOW_COMPONENTS_PATH=/app/custom_components
-      - LANGFLOW_CONFIG_DIR=/app/langflow
+      - LANGFLOW_DATABASE_URL=${LANGFLOW_DATABASE_URL:-postgresql://langflow_user:password@db:5432/langflow_db}
+      - LANGFLOW_COMPONENTS_PATH=${LANGFLOW_COMPONENTS_PATH:-/app/custom_components}
+      - LANGFLOW_CONFIG_DIR=${LANGFLOW_CONFIG_DIR:-/app/langflow}
+      - LANGFLOW_LOG_LEVEL=${LANGFLOW_LOG_LEVEL:-info}
+      # Optional: Uncomment to use OpenAI components
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Optional: Uncomment for Redis cache
+      # - LANGFLOW_CACHE_TYPE=${LANGFLOW_CACHE_TYPE}
+      # - LANGFLOW_REDIS_URL=${LANGFLOW_REDIS_URL}
     volumes:
       - ./custom_components:/app/custom_components
-      - langflow-data:/app/langflow
+      - ./data/langflow:/app/langflow
     depends_on:
       - db
     restart: unless-stopped
@@ -19,11 +25,11 @@ services:
     image: postgres:16
     container_name: langflow_db
     environment:
-      POSTGRES_USER: langflow_user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: langflow_db
+      POSTGRES_USER: ${POSTGRES_USER:-langflow_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-langflow_db}
     volumes:
-      - langflow-postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     restart: unless-stopped
 
   # Initialize volume permissions
@@ -31,9 +37,10 @@ services:
     image: busybox
     command: sh -c "mkdir -p /app/langflow && chmod -R 777 /app/langflow"
     volumes:
-      - langflow-data:/app/langflow
+      - ./data/langflow:/app/langflow
     restart: "no"
 
-volumes:
-  langflow-data:
-  langflow-postgres: 
+# No need for named volumes anymore since we're using local directories
+# volumes:
+#   langflow-data:
+#   langflow-postgres: 

@@ -8,6 +8,7 @@ This guide covers the basic usage of Langflow after you've successfully installe
    ```
    http://localhost:7860
    ```
+   (or the port you specified in your `.env` file)
 
 2. You'll be presented with the Langflow login screen. If this is your first time, you'll need to create an account.
 
@@ -56,7 +57,7 @@ If you've created custom components:
 1. Place your Python files in the `custom_components` directory
 2. Restart the Langflow container:
    ```bash
-   docker compose restart langflow
+   make restart
    ```
 3. Your custom components will appear in the components sidebar
 
@@ -73,15 +74,45 @@ If you've created custom components:
    - Hover over a flow in the list
    - Click the delete icon
 
+## Data Management
+
+All persistent data is stored in the `./data` directory:
+
+1. **Langflow Data**
+   - Located in `./data/langflow`
+   - Contains flows, settings, and user data
+   - Can be backed up by copying this directory
+
+2. **Database Data**
+   - Located in `./data/postgres`
+   - Contains the PostgreSQL database files
+   - Can be backed up by copying this directory
+
+## Environment Configuration
+
+You can configure Langflow by editing the `.env` file:
+
+1. **Port Configuration**
+   - Change `LANGFLOW_PORT` to use a different port
+   - Restart the containers with `make restart` for changes to take effect
+
+2. **Database Configuration**
+   - Modify `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
+   - Requires a full restart with `make clean` and `make start` to take effect
+
+3. **API Keys**
+   - Add your OpenAI API key by uncommenting and setting `OPENAI_API_KEY`
+   - Add other API keys as needed for different components
+
 ## Advanced Features
 
 1. **API Access**
    - Langflow provides an API for programmatic access
-   - Access the API documentation at `http://localhost:7860/docs`
+   - Access the API documentation at `http://localhost:7860/docs` (or your custom port)
 
-2. **Environment Variables**
-   - Configure environment variables in the `.env` file
-   - Restart the container for changes to take effect
+2. **Cache Configuration**
+   - Enable Redis caching by uncommenting and setting the Redis configuration in `.env`
+   - Improves performance for repeated operations
 
 ## Troubleshooting
 
@@ -97,5 +128,9 @@ If you encounter issues while using Langflow:
    - Verify connections between components are correct
 
 3. **Container Issues**
-   - Check Docker logs: `docker logs langflow_app`
-   - Restart the container: `docker compose restart langflow` 
+   - Check Docker logs: `make logs`
+   - Restart the container: `make restart`
+
+4. **Data Persistence Issues**
+   - Ensure the `./data` directory has proper permissions
+   - Run `docker compose run --rm init-volumes` to fix permissions 

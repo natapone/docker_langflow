@@ -6,9 +6,22 @@ This project provides a Docker Compose configuration for running Langflow locall
 ## Project Structure
 - `docker-compose.yml`: Main configuration file for Docker services
 - `.env.example`: Example environment variables file
+- `.env`: Environment variables for configuration (created from .env.example)
 - `README.md`: Instructions for using the Docker setup
 - `custom_components/`: Directory for custom Langflow components
+- `data/`: Directory for persistent data storage
+  - `data/langflow/`: Persistent storage for Langflow data
+  - `data/postgres/`: Persistent storage for PostgreSQL database
 - `project_info.txt`: This file, containing project documentation
+- `docs/`: Documentation directory
+  - `docs/setup/`: Setup and installation documentation
+    - `docs/setup/installation.md`: Installation guide
+    - `docs/setup/environment_configuration.md`: Environment variable configuration guide
+    - `docs/setup/data_persistence.md`: Data persistence and management guide
+    - `docs/setup/troubleshooting.md`: Troubleshooting common issues
+  - `docs/usage/`: Usage documentation
+    - `docs/usage/basic_usage.md`: Basic usage guide
+    - `docs/usage/custom_components.md`: Custom components guide
 
 ## Requirements
 - Docker Desktop for Mac
@@ -19,20 +32,46 @@ This project provides a Docker Compose configuration for running Langflow locall
 The Docker Compose setup includes:
 1. Langflow service using the official `langflowai/langflow:latest` image
 2. PostgreSQL database for persistence
-3. Docker volumes for data storage with proper permissions
+3. Local directory mounts for data storage with proper permissions
 4. Support for custom components
 5. Volume initialization service to ensure proper permissions
+6. Environment variable configuration via `.env` file
 
 ## Usage
-1. Create required directories: `mkdir -p custom_components`
-2. Start services: `docker compose up -d`
-3. Access Langflow at: http://localhost:7860
-4. Stop services: `docker compose down`
+1. Setup environment: `make setup`
+2. Customize configuration in `.env` file (optional)
+3. Start services: `make start`
+4. Access Langflow at: http://localhost:7860 (or custom port)
+5. Stop services: `make stop`
+
+## Environment Variables
+Key environment variables that can be configured in `.env`:
+- `LANGFLOW_PORT`: The port Langflow will be accessible on (default: 7860)
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`: Database credentials
+- `LANGFLOW_LOG_LEVEL`: Logging level (debug, info, warning, error, critical)
+- `OPENAI_API_KEY`: Your OpenAI API key (if using OpenAI components)
+
+## Documentation
+Comprehensive documentation is available in the `docs/` directory:
+
+### Setup Documentation
+- `installation.md`: Step-by-step installation guide
+- `environment_configuration.md`: Detailed guide on configuring environment variables
+- `data_persistence.md`: Information on data storage, backup, and restore
+- `troubleshooting.md`: Solutions for common issues
+
+### Usage Documentation
+- `basic_usage.md`: Guide to using Langflow, including creating flows and managing data
+- `custom_components.md`: Guide to creating and using custom components
 
 ## Changelog
 - 2024-03-09: Initial setup with Docker Compose, PostgreSQL, and custom components support
 - 2024-03-09: Updated commands to use `docker compose` instead of `docker-compose` for compatibility with newer Docker versions
 - 2024-03-09: Added volume initialization service to fix permission issues with the Langflow data directory
+- 2024-03-09: Changed from named volumes to local directory mounts for better data management
+- 2024-03-10: Improved environment variable configuration using `.env` file
+- 2024-03-11: Updated Makefile to display dynamic port from .env file
+- 2024-03-11: Added comprehensive documentation in the docs/ directory
 
 ## References
 - Langflow Documentation: https://docs.langflow.org/deployment-docker

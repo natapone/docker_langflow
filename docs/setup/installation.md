@@ -24,32 +24,47 @@ Before you begin, ensure you have the following installed:
    cd docker_langflow
    ```
 
-2. **Create required directories**
+2. **Run the setup command**
 
    ```bash
-   mkdir -p custom_components
+   make setup
    ```
+
+   This will:
+   - Create necessary directories (`custom_components`, `data/langflow`, `data/postgres`)
+   - Copy `.env.example` to `.env` (if it doesn't exist)
 
 3. **Configure environment variables (optional)**
 
+   Edit the `.env` file to customize your configuration:
+
    ```bash
-   cp .env.example .env
+   nano .env
    ```
 
-   Edit the `.env` file to customize your configuration if needed.
+   Key configuration options:
+   - `LANGFLOW_PORT`: The port Langflow will be accessible on (default: 7860)
+   - `POSTGRES_USER`, `POSTGRES_PASSWORD`: Database credentials
+   - `LANGFLOW_LOG_LEVEL`: Logging level (debug, info, warning, error, critical)
+   - `OPENAI_API_KEY`: Your OpenAI API key (if using OpenAI components)
 
 4. **Start the Docker containers**
 
    ```bash
-   docker compose up -d
+   make start
    ```
+
+   This will:
+   - Initialize volume permissions
+   - Start the PostgreSQL database
+   - Start the Langflow application
 
 5. **Verify installation**
 
    Check that the containers are running:
 
    ```bash
-   docker ps
+   make status
    ```
 
    You should see two containers running:
@@ -62,6 +77,15 @@ Before you begin, ensure you have the following installed:
    ```
    http://localhost:7860
    ```
+   (or the port you specified in your `.env` file)
+
+## Data Storage
+
+All persistent data is stored in the `./data` directory:
+- `./data/langflow`: Contains Langflow data (flows, settings, etc.)
+- `./data/postgres`: Contains PostgreSQL database files
+
+This makes it easy to backup, restore, or inspect your data.
 
 ## Troubleshooting
 
@@ -70,7 +94,7 @@ If you encounter any issues during installation:
 1. **Check Docker logs**
 
    ```bash
-   docker logs langflow_app
+   make logs
    ```
 
 2. **Verify Docker resources**
@@ -79,11 +103,29 @@ If you encounter any issues during installation:
 
 3. **Reset the setup**
 
-   If you need to start fresh:
+   If you need to start fresh but keep your data:
 
    ```bash
-   docker compose down -v
-   docker compose up -d
+   make clean
+   make start
+   ```
+
+4. **Complete cleanup**
+
+   If you want to remove all data and start from scratch:
+
+   ```bash
+   make clean-all
+   make setup
+   make start
+   ```
+
+5. **Permission issues**
+
+   If you encounter permission errors, you can manually fix permissions with:
+
+   ```bash
+   docker compose run --rm init-volumes
    ```
 
 ## Next Steps

@@ -14,7 +14,7 @@ help:
 
 setup:
 	@echo "Setting up Langflow..."
-	mkdir -p custom_components
+	mkdir -p custom_components data/langflow data/postgres
 	cp -n .env.example .env 2>/dev/null || true
 	@echo "Setup complete. Edit .env file if needed, then run 'make start'"
 
@@ -24,7 +24,8 @@ start:
 	docker compose up init-volumes --build
 	@echo "Starting main services..."
 	docker compose up -d
-	@echo "Langflow is running at http://localhost:7860"
+	@PORT=$$(grep LANGFLOW_PORT .env | cut -d= -f2 | cut -d' ' -f1 || echo 7860); \
+	echo "Langflow is running at http://localhost:$$PORT"
 
 stop:
 	@echo "Stopping Langflow containers..."
@@ -33,7 +34,8 @@ stop:
 restart:
 	@echo "Restarting Langflow containers..."
 	docker compose restart
-	@echo "Langflow is running at http://localhost:7860"
+	@PORT=$$(grep LANGFLOW_PORT .env | cut -d= -f2 | cut -d' ' -f1 || echo 7860); \
+	echo "Langflow is running at http://localhost:$$PORT"
 
 logs:
 	@echo "Showing Langflow logs (Ctrl+C to exit)..."
@@ -41,8 +43,14 @@ logs:
 
 clean:
 	@echo "Cleaning up Langflow containers and volumes..."
-	docker compose down -v
+	docker compose down
 	@echo "Cleanup complete"
+
+clean-all:
+	@echo "Cleaning up Langflow containers and removing all data..."
+	docker compose down
+	rm -rf data/langflow/* data/postgres/*
+	@echo "Complete cleanup done. All data has been removed."
 
 status:
 	@echo "Checking Langflow container status..."
