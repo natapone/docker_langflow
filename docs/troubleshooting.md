@@ -7,9 +7,9 @@ This guide provides solutions for common issues you might encounter when setting
 ### Containers Not Starting
 
 **Symptoms:**
-- `make start` command fails
+- `docker compose up -d` command fails
 - Containers exit immediately after starting
-- `make status` shows containers in an exited state
+- `docker compose ps` shows containers in an exited state
 
 **Solutions:**
 
@@ -22,7 +22,7 @@ docker info
 2. **Check Logs:**
 ```bash
 # View logs for all containers
-make logs
+docker compose logs -f
 
 # View logs for a specific container
 docker logs langflow_app
@@ -37,12 +37,13 @@ lsof -i :7860
 
 4. **Reset the Setup:**
 ```bash
-make clean
-make setup
-make start
+docker compose down
+rm -rf data/langflow/cache
+./setup.sh
+docker compose up -d
 ```
 
-### Database Connection Issues
+## Database Connection Issues
 
 **Symptoms:**
 - Langflow container starts but the web interface shows database errors
@@ -69,10 +70,10 @@ cat .env | grep DATABASE
 
 4. **Reset Database:**
 ```bash
-make clean
+docker compose down
 rm -rf ./data/postgres
-make setup
-make start
+./setup.sh
+docker compose up -d
 ```
 
 ## Permission Issues
@@ -85,9 +86,9 @@ make start
 
 **Solutions:**
 
-1. **Run Setup Command:**
+1. **Run Init Volumes Container:**
 ```bash
-make setup
+docker compose run --rm init-volumes
 ```
 
 2. **Check Initialization Service Logs:**
@@ -140,15 +141,6 @@ Ensure your firewall allows connections to the Langflow port.
 3. **Try Different Browser or Device:**
 Sometimes browser caching or network settings can cause issues.
 
-4. **Check Host Network:**
-```bash
-# For macOS/Linux
-ifconfig
-
-# For Windows
-ipconfig
-```
-
 ## Configuration Issues
 
 ### Environment Variables Not Applied
@@ -164,7 +156,7 @@ Ensure there are no syntax errors in the `.env` file.
 
 2. **Restart Containers:**
 ```bash
-make restart
+docker compose restart
 ```
 
 3. **Check if .env is Being Read:**
@@ -175,8 +167,8 @@ docker exec langflow_app env | grep LANGFLOW
 
 4. **Recreate Containers:**
 ```bash
-make clean
-make start
+docker compose down
+docker compose up -d
 ```
 
 ### Port Configuration Issues
@@ -203,12 +195,37 @@ LANGFLOW_PORT=7861
 
 3. **Restart Containers:**
 ```bash
-make restart
+docker compose restart
+```
+
+## Package Installation Issues
+
+**Symptoms:**
+- Custom packages not available in the container
+- ImportError when using components that need specific packages
+
+**Solutions:**
+
+1. **Verify Package Installation Command:**
+Check if your docker-compose.yml has the correct command to install packages.
+
+2. **Check If Packages Were Installed:**
+```bash
+docker exec langflow_app pip list
+```
+
+3. **Reinstall Packages:**
+```bash
+docker compose down
+docker compose up -d
+```
+
+4. **Check Package Installation Logs:**
+```bash
+docker logs langflow_app | grep "pip install"
 ```
 
 ## Data Persistence Issues
-
-### Data Not Persisting Between Restarts
 
 **Symptoms:**
 - Flows disappear after container restarts
@@ -233,12 +250,10 @@ Ensure volume mounts are correctly configured in `docker-compose.yml`.
 
 4. **Reset Permissions:**
 ```bash
-make setup
+docker compose run --rm init-volumes
 ```
 
 ## Performance Issues
-
-### Slow Performance
 
 **Symptoms:**
 - Langflow UI is slow to respond
@@ -256,17 +271,15 @@ In Docker Desktop settings, increase CPU and memory allocation.
 
 3. **Check Logs for Errors:**
 ```bash
-make logs
+docker compose logs -f
 ```
 
 4. **Restart Containers:**
 ```bash
-make restart
+docker compose restart
 ```
 
 ## Update Issues
-
-### Problems After Updating
 
 **Symptoms:**
 - Errors after pulling new versions
@@ -276,10 +289,10 @@ make restart
 
 1. **Clean and Rebuild:**
 ```bash
-make clean
+docker compose down
 git pull  # If using git repository
-make setup
-make start
+./setup.sh
+docker compose up -d
 ```
 
 2. **Check for Breaking Changes:**
@@ -291,11 +304,11 @@ Review the changelog or release notes for any breaking changes.
 cp -r ./data /path/to/backup
 
 # After update, if needed:
-make clean
+docker compose down
 rm -rf ./data
 cp -r /path/to/backup/data ./data
-make setup
-make start
+./setup.sh
+docker compose up -d
 ```
 
 ## Common Error Messages
@@ -316,7 +329,7 @@ LANGFLOW_PORT=7861
 
 **Solution:**
 ```bash
-make setup
+docker compose run --rm init-volumes
 ```
 
 ### "Connection refused to database"
@@ -329,7 +342,7 @@ make setup
 docker ps | grep langflow_db
 
 # Restart containers
-make restart
+docker compose restart
 ```
 
 ### "No space left on device"
