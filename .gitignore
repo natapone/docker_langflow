@@ -47,3 +47,5 @@ var/
 *.iws
 *.ipr
 .idea_modules/ 
+
+.cursor

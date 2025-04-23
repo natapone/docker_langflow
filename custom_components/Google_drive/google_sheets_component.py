@@ -22,42 +22,42 @@ class GoogleSheetComponent(Component):
         StrInput(
             name="sheet_identifier",
             display_name="Sheet Name or ID",
-            info="Name or ID of the Google Sheet document",
+            info="Name or ID of the Google Sheet document. You can use either the full name of the sheet (e.g., 'My Spreadsheet') or the sheet ID from the URL (e.g., '1111111111111111111111111111111111111111')",
             required=True,
             tool_mode=True,
         ),
         StrInput(
             name="worksheet_name",
             display_name="Worksheet Name",
-            info="Name of the worksheet/tab (default: Sheet1)",
+            info="Name of the worksheet/tab within the spreadsheet (e.g., 'Sheet1', 'Data', 'Responses'). Default is 'Sheet1' if left blank.",
             value="Sheet1",
             tool_mode=True,
         ),
         SecretStrInput(
             name="service_account_json",
             display_name="Service Account JSON",
-            info="Paste your service_account.json content",
+            info="Paste your Google service_account.json content here. This JSON contains authentication credentials for your Google Cloud service account. Make sure the spreadsheet is shared with the service account email.",
             required=True,
             # multiline=True,
         ),
         StrInput(
             name="cell_range",
             display_name="Cell Range",
-            info="Cell or range to read/update (e.g., 'A1' or 'A1:B5')",
+            info="Specify a single cell or range to read/update. Examples: 'A1' (single cell), 'B2:C5' (range), 'A:A' (entire column), '1:1' (entire row), 'A2:A' (column A from row 2 down)",
             value="A1",
             tool_mode=True,
         ),
         StrInput(
             name="operation",
             display_name="Operation",
-            info="Operation to perform: read, update, append",
+            info="Operation to perform: 'read' (get values), 'update' (modify values), 'append' (add rows). For 'update' with ranges, provide a 2D array as JSON. For 'append', provide a JSON array of row data to append.",
             value="read",
             tool_mode=True,
         ),
         MultilineInput(
             name="data",
             display_name="Data to Write",
-            info="Data to write (for update/append operations)",
+            info="Data to write for update/append operations. For single cell: simple text or value. For range updates: JSON format like [[\"A1\",\"B1\"],[\"A2\",\"B2\"]]. For append: JSON array like [[\"row1col1\",\"row1col2\"],[\"row2col1\",\"row2col2\"]]",
             # multiline=True,
             tool_mode=True,
         ),
@@ -67,12 +67,12 @@ class GoogleSheetComponent(Component):
         Output(display_name="Sheet Data", name="sheet_data", method="process_sheet"),
     ]
 
-    def _ensure_packages_installed(self) -> bool:
+    def _ensure_packages_available(self) -> bool:
         """
-        Check if required packages are installed, and install them if not.
+        Make sure required packages are available by adding the site-packages path
         
         Returns:
-            bool: True if packages are available, False if installation failed
+            bool: True if packages are available, False if not found
         """
         try:
             # Try importing required packages
@@ -80,39 +80,28 @@ class GoogleSheetComponent(Component):
             from oauth2client.service_account import ServiceAccountCredentials
             return True
         except ImportError:
-            # Add user local directory to Python path and try again
+            # Add the fixed Python 3.12 site-packages path
             user_site_packages = '/app/data/.local/lib/python3.12/site-packages'
             if user_site_packages not in sys.path:
                 sys.path.append(user_site_packages)
             
-            # Try to import after adding the path
+            # Try importing again
             try:
                 import gspread
                 from oauth2client.service_account import ServiceAccountCredentials
                 return True
             except ImportError:
-                # Try to install packages
-                try:
-                    import subprocess
-                    logger.info("Installing required packages (gspread, oauth2client)...")
-                    subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "gspread", "oauth2client"])
-                    
-                    # Import after installation
-                    import gspread
-                    from oauth2client.service_account import ServiceAccountCredentials
-                    return True
-                except Exception as e:
-                    self.status = f"Failed to install required packages: {str(e)}"
-                    return False
+                self.status = "Required packages not found. Make sure gspread and oauth2client are installed."
+                return False
 
     def _setup_gspread_client(self) -> Any:
         """Set up and return an authenticated gspread client"""
         # First ensure required packages are available
-        if not self._ensure_packages_installed():
+        if not self._ensure_packages_available():
             return None
             
         try:
-            # Import here after ensuring packages are installed
+            # Import here after ensuring packages are available
             import gspread
             from oauth2client.service_account import ServiceAccountCredentials
             
@@ -151,7 +140,7 @@ class GoogleSheetComponent(Component):
             Dict[str, Any]: The result of the operation
         """
         try:
-            # Setup gspread client - this will also check/install required packages
+            # Setup gspread client - this will also check for required packages
             client = self._setup_gspread_client()
             if not client:
                 return {
@@ -208,8 +197,20 @@ class GoogleSheetComponent(Component):
                     
                     # Process for single cell or range update
                     if ":" not in self.cell_range:
-                        # Single cell update
-                        worksheet.update(self.cell_range, self.data)
+                        # Single cell update - using the worksheet.update_cell method
+                        # First extract row and column from the cell reference
+                        cell_ref = self.cell_range.upper()
+                        # Extract column letters and row number
+                        col_letters = ''.join(filter(str.isalpha, cell_ref))
+                        row_num = int(''.join(filter(str.isdigit, cell_ref)))
+                        
+                        # Convert column letters to column number
+                        col_num = 0
+                        for char in col_letters:
+                            col_num = col_num * 26 + (ord(char) - ord('A') + 1)
+                        
+                        # Now use update_cell which takes row, col, value
+                        worksheet.update_cell(row_num, col_num, self.data)
                         self.status = f"Successfully updated {self.cell_range}"
                     else:
                         # Range update - parse data as JSON

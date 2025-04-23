@@ -4,7 +4,9 @@ services:
     container_name: langflow_app
     command: >
       /bin/bash -c "
-      pip install gspread oauth2client google-api-python-client google-auth google-auth-httplib2 &&
+      echo 'Installing Python packages...' &&
+      pip install --user gspread oauth2client &&
+      echo 'Starting Langflow...' &&
       python -m langflow run --env-file /app/.env"
     ports:
       - "${LANGFLOW_PORT:-7860}:7860"
